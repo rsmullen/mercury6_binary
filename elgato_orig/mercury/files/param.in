@@ -5,8 +5,8 @@
 )---------------------------------------------------------------------
  algorithm (MVS, BS, BS2, RADAU, HYBRID etc) = RADAU
  start time (days)= 0.
- stop time (days) = 1.E4
- output interval (days) = 100.
+ stop time (days) = 109572660.
+ output interval (days) = 500.
  timestep (days) = 10.
  accuracy parameter=1.d-10
 )---------------------------------------------------------------------
@@ -17,7 +17,7 @@
  include collisional fragmentation = no
  express time in days or years = years
  express time relative to integration start time = yes
- output precision = medium
+ output precision = high
  < not used at present >
  include relativity in integration= no
  include user-defined force = no
@@ -25,13 +25,13 @@
 ) These parameters do not need to be adjusted often:
 )---------------------------------------------------------------------
  ejection distance (AU)= 1000
- radius of central body (AU) = 0.0005
- central mass (solar) = 1.043
+ radius of central body (AU) = 0.00325
+ central mass (solar) = 0.5
  central J2 = 0
  central J4 = 0
  central J6 = 0
  < not used at present >
  < not used at present >
  Hybrid integrator changeover (Hill radii) = 3.
- number of timesteps between data dumps = 1
+ number of timesteps between data dumps = 10000
  number of timesteps between periodic effects = 1

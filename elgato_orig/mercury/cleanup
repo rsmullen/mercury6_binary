@@ -1,0 +1,10 @@
+#!/bin/bash
+
+thisdir=$(cat lsf.sh | head -n 2 | tail -1 | cut -d= -f2)
+
+mkdir $thisdir/err
+mkdir $thisdir/out
+
+mv err* $thisdir/err
+mv out* $thisdir/out
+

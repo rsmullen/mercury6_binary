@@ -1,9 +1,4 @@
 c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-c This is adapted from the Mercury N-body code from John Chambers 
-
-c NOTE: change isbinary flag in mercury.inc
-
-c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
 c      MERCURY6_1.FOR    (ErikSoft   3 May 2002)
 c
@@ -132,12 +127,10 @@ c
 c
 c------------------------------------------------------------------------------
 c
-      WRITE(*,*) 'trying this'
 c Get initial conditions and integration parameters
       call mio_in (time,tstart,tstop,dtout,algor,h0,tol,rmax,rcen,jcen,
      %  en,am,cefac,ndump,nfun,nbod,nbig,m,xh,vh,s,rho,rceh,stat,id,
      %  epoch,ngf,opt,opflag,ngflag,outfile,dumpfile,lmem,mem)
-      WRITE(*,*) 'after mio_in'
 c
 c If this is a new integration, integrate all the objects to a common epoch.
       if (opflag.eq.-2) then
@@ -243,6 +236,7 @@ c Input/Output
 c
 c Local
       integer j
+c
 c------------------------------------------------------------------------------
 c
       do j = 1, nbod
@@ -250,51 +244,6 @@ c
         a(2,j) = 0.d0
         a(3,j) = 0.d0
       end do
-c
-c------------------------------------------------------------------------------
-c
-      return
-      end
-c
-c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-c
-c      MFO_USER.FOR    (ErikSoft   2 March 2001)
-c
-c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-c
-c Author: John E. Chambers
-c
-c Applies an arbitrary force, defined by the user.
-c
-c If using with the symplectic algorithm MAL_MVS, the force should be
-c small compared with the force from the central object.
-c If using with the conservative Bulirsch-Stoer algorithm MAL_BS2, the
-c force should not be a function of the velocities.
-c
-c N.B. All coordinates and velocities must be with respect to central body
-c ===
-c------------------------------------------------------------------------------
-c
-      subroutine mfo_user_centralradius (mm,rcalc,starce)
-c
-      implicit none
-      include 'mercury.inc'
-c
-c Input/Output
-      real*8 mm,rcalc,starce
-c
-c Local
-c------------------------------------------------------------------------------
-c from Demircan and Kahraman 1991
-          if (mm.le.1.66) then
-c don't forget to put in AU
-            rcalc=1.06*(mm/K2)**0.945*0.0046491
-          else
-            rcalc=1.033*(mm/K2)**0.555*0.0046491
-          endif
-
-c set stellar close encounter radius in stellar radii
-          starce=3.
 c
 c------------------------------------------------------------------------------
 c
@@ -339,7 +288,6 @@ c Local
       integer dtflag,ejflag,nowflag,stopflag,nstored,ce(NMAX)
       integer nclo,iclo(CMAX),jclo(CMAX),nce,ice(NMAX),jce(NMAX)
       real*8 tmp0,h,hdid,tout,tdump,tfun,tlog,tsmall,dtdump,dtfun
-      real*8 rcalc,starce
       real*8 thit(CMAX),dhit(CMAX),thit1,x0(3,NMAX),v0(3,NMAX)
       real*8 rce(NMAX),rphys(NMAX),rcrit(NMAX),a(NMAX)
       real*8 dclo(CMAX),tclo(CMAX),epoch(NMAX)
@@ -363,10 +311,6 @@ c
 c Calculate close-encounter limits and physical radii for massive bodies
       call mce_init (tstart,algor,h0,jcen,rcen,rmax,cefac,nbod,nbig,
      %  m,xh,vh,s,rho,rceh,rphys,rce,rcrit,id,opt,outfile(2),1)
-c RAS
-      WRITE(*,*) 'init',rce(1),rce(2)
-      WRITE(*,*) 'isbinary is',isbinary
-
 c
 c Set up time of next output, times of previous dump, log and periodic effect
       if (opflag.eq.-1) then
@@ -422,7 +366,6 @@ c Set the timestep
 c
 c Save the current coordinates and velocities
       call mco_iden (time,jcen,nbod,nbig,h,m,xh,vh,x0,v0,ngf,ngflag,opt)
-c      write(*,*) nbod, nbig
 c
 c Advance one timestep
       call onestep (time,h,hdid,tol,jcen,nbod,nbig,m,xh,vh,s,rphys,
@@ -476,28 +419,27 @@ c
 c------------------------------------------------------------------------------
 c
 c  COLLISIONS  WITH  CENTRAL  BODY
-      if (.not.isbinary) then
+c
 c Check for collisions
-        call mce_cent (time,hdid,rcen,jcen,2,nbod,nbig,m,x0,v0,xh,vh,
-     %  nhit,jhit,thit,dhit,algor,ngf,ngflag)
-
+      call mce_cent (time,hdid,rcen,jcen,2,nbod,nbig,m,x0,v0,xh,vh,nhit,
+     %  jhit,thit,dhit,algor,ngf,ngflag)
+c
 c Resolve the collisions
-        if (nhit.gt.0) then
-          do k = 1, nhit
-            i = 1
-            j = jhit(k)
-            call mce_coll (thit(k),tstart,en(3),jcen,i,j,nbod,nbig,m,xh,
+      if (nhit.gt.0) then
+        do k = 1, nhit
+          i = 1
+          j = jhit(k)
+          call mce_coll (thit(k),tstart,en(3),jcen,i,j,nbod,nbig,m,xh,
      %      vh,s,rphys,stat,id,opt,mem,lmem,outfile(3))
-          end do
-
+        end do
+c
 c Remove lost objects, reset flags and recompute Hill and physical radii
-          call mxx_elim (nbod,nbig,m,xh,vh,s,rho,rceh,rcrit,ngf,stat,
+        call mxx_elim (nbod,nbig,m,xh,vh,s,rho,rceh,rcrit,ngf,stat,
      %    id,mem,lmem,outfile(3),itmp)
-          dtflag = 1
-          if (opflag.ge.0) opflag = 1
-          call mce_init (tstart,algor,h0,jcen,rcen,rmax,cefac,nbod,nbig,
+        dtflag = 1
+        if (opflag.ge.0) opflag = 1
+        call mce_init (tstart,algor,h0,jcen,rcen,rmax,cefac,nbod,nbig,
      %    m,xh,vh,s,rho,rceh,rphys,rce,rcrit,id,opt,outfile(2),0)
-        end if
       end if
 c
 c------------------------------------------------------------------------------
@@ -533,21 +475,9 @@ c
 c
 c Recompute close encounter limits, to allow for changes in Hill radii
         call mce_hill (nbod,m,xh,vh,rce,a)
-c RAS
-        if (isbinary) then
-          do j=1,2
-             call mfo_user_centralradius (m(j),rcalc,starce)
-             rce(j)=starce*rcalc
-          end do
-          do j = 3, nbod
-            rce(j) = rce(j) * rceh(j)
-          end do
-        else 
-          do j = 2, nbod
-            rce(j) = rce(j) * rceh(j)
-          end do
-        endif
-
+        do j = 2, nbod
+          rce(j) = rce(j) * rceh(j)
+        end do
 c
 c Check for ejections
         call mxx_ejec (time,tstart,rmax,en,am,jcen,2,nbod,nbig,m,xh,vh,
@@ -564,8 +494,6 @@ c Remove lost objects, reset flags and recompute Hill and physical radii
         end if
         tfun = time
       end if
-
-
 c
 c Go on to the next time step
       goto 100
@@ -743,50 +671,48 @@ c------------------------------------------------------------------------------
 c
 c  COLLISIONS  WITH  CENTRAL  BODY
 c
-      if (.not.isbinary) then
 c Check for collisions with the central body
-       if (algor.eq.1) then
+      if (algor.eq.1) then
         call mco_iden(time,jcen,nbod,nbig,h0,m,x,v,xh,vh,ngf,ngflag,opt)
-       else
+      else
         call bcoord (time,jcen,nbod,nbig,h0,m,x,v,xh,vh,ngf,ngflag,opt)
-       end if
-       itmp = 2
-       if (algor.eq.11.or.algor.eq.12) itmp = 3
-       call mce_cent (time,h0,rcen,jcen,itmp,nbod,nbig,m,xh0,vh0,xh,vh,
+      end if
+      itmp = 2
+      if (algor.eq.11.or.algor.eq.12) itmp = 3
+      call mce_cent (time,h0,rcen,jcen,itmp,nbod,nbig,m,xh0,vh0,xh,vh,
      %  nhit,jhit,thit,dhit,algor,ngf,ngflag)
-  
+c
 c If something hit the central body, restore the coords prior to this step
-       if (nhit.gt.0) then
-         call mco_iden (time,jcen,nbod,nbig,h0,m,xh0,vh0,xh,vh,ngf,
+      if (nhit.gt.0) then
+        call mco_iden (time,jcen,nbod,nbig,h0,m,xh0,vh0,xh,vh,ngf,
      %    ngflag,opt)
-         time = time - h0
-  
+        time = time - h0
+c
 c Merge the object(s) with the central body
-         do k = 1, nhit
-           i = 1
-           j = jhit(k)
-           call mce_coll (thit(k),tstart,en(3),jcen,i,j,nbod,nbig,m,xh,
+        do k = 1, nhit
+          i = 1
+          j = jhit(k)
+          call mce_coll (thit(k),tstart,en(3),jcen,i,j,nbod,nbig,m,xh,
      %      vh,s,rphys,stat,id,opt,mem,lmem,outfile(3))
-         end do
-  
+        end do
+c
 c Remove lost objects, reset flags and recompute Hill and physical radii
-         call mxx_elim (nbod,nbig,m,xh,vh,s,rho,rceh,rcrit,ngf,stat,
+        call mxx_elim (nbod,nbig,m,xh,vh,s,rho,rceh,rcrit,ngf,stat,
      %    id,mem,lmem,outfile(3),itmp)
-         if (opflag.ge.0) opflag = 1
-         dtflag = 1
-         call mce_init (tstart,algor,h0,jcen,rcen,rmax,cefac,nbod,nbig,
+        if (opflag.ge.0) opflag = 1
+        dtflag = 1
+        call mce_init (tstart,algor,h0,jcen,rcen,rmax,cefac,nbod,nbig,
      %    m,xh,vh,s,rho,rceh,rphys,rce,rcrit,id,opt,outfile(2),0)
-         if (algor.eq.1) then
-           call mco_iden (time,jcen,nbod,nbig,h0,m,xh,vh,x,v,ngf,ngflag,
+        if (algor.eq.1) then
+          call mco_iden (time,jcen,nbod,nbig,h0,m,xh,vh,x,v,ngf,ngflag,
      %      opt)
-         else
+        else
           call coord (time,jcen,nbod,nbig,h0,m,xh,vh,x,v,ngf,ngflag,opt)
-         end if
-  
-c Redo that integration time step
-         goto 150
         end if
-      endif
+c
+c Redo that integration time step
+        goto 150
+      end if
 c
 c------------------------------------------------------------------------------
 c
@@ -1008,7 +934,7 @@ c If inside the central body, or passing through pericentre, use 2-body approx.
           temp = 1.d0 + p*(v2/(mcen + m(j)) - 2.d0/r0)
           e = sqrt( max(temp,0.d0) )
           q = p / (1.d0 + e)
-
+c
 c If the object hit the central body
           if (q.le.rcen) then
             nhit = nhit + 1
@@ -1114,14 +1040,8 @@ c
           flost = '(1x,a8,a,f18.5,a)'
           fcol  = '(1x,a8,a,a8,a,1x,f14.1,a)'
         end if
-c ras
         if (i.eq.0.or.i.eq.1) then
-          if (isbinary) then
-            write (23,fcol) "STAR1",mem(69)(1:lmem(69)),id(j),
-     %        mem(71)(1:lmem(71)),t1,tstring
-          else
-            write (23,flost) id(j),mem(67)(1:lmem(67)),t1,tstring
-          endif
+          write (23,flost) id(j),mem(67)(1:lmem(67)),t1,tstring
         else
           write (23,fcol) id(i),mem(69)(1:lmem(69)),id(j),
      %      mem(71)(1:lmem(71)),t1,tstring
@@ -1172,47 +1092,19 @@ c Input/Output
       real*8 m(nbod),x(3,nbod),v(3,nbod),hill(nbod),a(nbod)
 c
 c Local
-      integer j,k
+      integer j
       real*8 r, v2, gm
-c problem delcaring xj,vj arrays
-      real*8 xj(3,NMAX),vj(3,NMAX)
 c
 c------------------------------------------------------------------------------
 c
-
-      if (isbinary) then
-c RAS added in jacobi
-        call mco_h2jras (nbod,nbod,m,x,v,xj,vj)
-c        write(*,*) xj,vj
-c         write(*,*) 'binary'
-c RAS changed j=2->3; gm = m(1) + m(j) ->  = m(1) + m(j) +m(2)
-        do j = 2, nbod
-          gm=0.
-          do k=1,j
-            gm = gm + m(k)
-          end do
-c ras-- use r instead of osculating elements
-          a(j)= sqrt(xj(1,j)*xj(1,j)+xj(2,j)*xj(2,j)+xj(3,j)*xj(3,j))
-c          call mco_x2a (gm,xj(1,j),xj(2,j),xj(3,j),vj(1,j),vj(2,j),
-c     %   vj(3,j),a(j),r,v2)
+      do j = 2, nbod
+        gm = m(1) + m(j)
+        call mco_x2a (gm,x(1,j),x(2,j),x(3,j),v(1,j),v(2,j),v(3,j),a(j),
+     %    r,v2)
 c If orbit is hyperbolic, use the distance rather than the semi-major axis
-c          if (a(j).le.0) a(j) = r
-          hill(j) = a(j) * (THIRD * m(j) / gm)**THIRD
-        end do
-c        write(*,*) a(6),hill(6)
-      else
-
-c From original code
-        do j = 2, nbod
-          gm = m(1) + m(j)
-          call mco_x2a (gm,x(1,j),x(2,j),x(3,j),v(1,j),v(2,j),v(3,j),
-     %    a(j),r,v2)
-c If orbit is hyperbolic, use the distance rather than the semi-major axis
-          if (a(j).le.0) a(j) = r
-          hill(j) = a(j) * (THIRD * m(j) / m(1))**THIRD
-        end do
-
-      end if
+        if (a(j).le.0) a(j) = r
+        hill(j) = a(j) * (THIRD * m(j) / m(1))**THIRD
+      end do
 c
 c------------------------------------------------------------------------------
 c
@@ -1262,7 +1154,6 @@ c
 c Local
       integer j
       real*8 a(NMAX),hill(NMAX),temp,amin,vmax,k_2,rhocgs,rcen_2
-      real*8 rcalc,starce
       character*80 header,c(NMAX)
       character*8 mio_re2c, mio_fl2c
 c
@@ -1277,50 +1168,21 @@ c Calculate the Hill radii
       call mce_hill (nbod,m,x,v,hill,a)
 c
 c Determine the maximum close-encounter distances, and the physical radii
-c ras-- put in if (isbinary) part to compensate for dual mass at center
-c      temp = 2.25d0 * m(1) / PI
-c RAS
-c make binary close encounter three stellar radii
-      if (isbinary) then
-c       write(*,*) "binary"
-       temp = 2.25d0 * ( m(1)+m(2) ) / PI
-       do j = 1, 2
-          call mfo_user_centralradius (m(j),rcalc,starce)
-          rce(j)=starce*rcalc
-          rphys(j) = rcalc
-          rcen_2 = 1.d0 / (rcalc * rcalc)
-          amin = min (a(j), amin)
-c          rce(j)   = 3.*rcen
-c          rphys(j) = rcen
-c          amin = min (a(j), amin)
-        end do
-        do j = 3, nbod
-          rce(j)   = hill(j) * rceh(j)
-c          rphys(j) = hill(j) / a(j) * (temp/rho(j))**THIRD
-          rphys(j) = ((3.d0 * m(j)) / (4.d0 * PI * rho(j)) )**THIRD 
-          amin = min (a(j), amin)
-        end do
-c        WRITE(*,*) rce
-      else
-        temp = 2.25d0 * m(1) / PI
-        do j = 2, nbod
-          rce(j)   = hill(j) * rceh(j)
-          rphys(j) = hill(j) / a(j) * (temp/rho(j))**THIRD
-          amin = min (a(j), amin)
-        end do
-      end if
-c ras-- we don't need the hybrid changeover...
-c      rcritflag=0
+      temp = 2.25d0 * m(1) / PI
+      do j = 2, nbod
+        rce(j)   = hill(j) * rceh(j)
+        rphys(j) = hill(j) / a(j) * (temp/rho(j))**THIRD
+        amin = min (a(j), amin)
+      end do
 c
 c If required, calculate the changeover distance used by hybrid algorithm
-c      if (rcritflag.eq.1) then
-c        WRITE(*,*) "changeover"
-c        vmax = sqrt (m(1) / amin)
-c        temp = N2 * h * vmax
-c        do j = 2, nbod
-c          rcrit(j) = max(hill(j) * cefac, temp)
-c        end do
-c      end if
+      if (rcritflag.eq.1) then
+        vmax = sqrt (m(1) / amin)
+        temp = N2 * h * vmax
+        do j = 2, nbod
+          rcrit(j) = max(hill(j) * cefac, temp)
+        end do
+      end if
 c
 c Write list of object's identities to close-encounter output file
       header(1:8)   = mio_fl2c (tstart)
@@ -1330,15 +1192,9 @@ c Write list of object's identities to close-encounter output file
       header(23:30) = mio_fl2c (jcen(1) * rcen_2)
       header(31:38) = mio_fl2c (jcen(2) * rcen_2 * rcen_2)
       header(39:46) = mio_fl2c (jcen(3) * rcen_2 * rcen_2 * rcen_2)
-c ras-- changing rcen to rcalc for binary
-      if (isbinary) then
-         header(47:54) = mio_fl2c (rcalc)
-      else 
-         header(47:54) = mio_fl2c (rcen)
-      endif
+      header(47:54) = mio_fl2c (rcen)
       header(55:62) = mio_fl2c (rmax)
 c
-c RAS
       do j = 2, nbod
         c(j)(1:8) = mio_re2c (dble(j - 1), 0.d0, 11239423.99d0)
         c(j)(4:11) = id(j)
@@ -1445,9 +1301,6 @@ c Calculate energy loss due to the collision
         call mxx_en (jcen,nbod,nbig,m,xh,vh,s,e1,l2)
         elost = elost + (e0 - e1)
       else
-
-c RAS  if it is a test particle-test particle collision, ignore it.
-        if ((i.gt.nbig).and.(j.gt.nbig)) RETURN
 c
 c If two bodies collided...
         msum   = m(i) + m(j)
@@ -1612,10 +1465,8 @@ c Local
 c
 c------------------------------------------------------------------------------
 c
-c RAS
       if (i0.le.0) i0 = 2
       nce = 0
-c RAS
       do j = 2, nbod
         ce(j) = 0
       end do
@@ -1745,15 +1596,10 @@ c
 c
 c Calculate maximum and minimum values of x and y coords for each object
       call mce_box (nbod,h,x0,v0,x1,v1,xmin,xmax,ymin,ymax)
-c RAS
-c      write(*,*) xmin(3),xmax(3),ymin(3),ymax(3)
-      
-c    
+c
 c Adjust values by the maximum close-encounter radius plus a fudge factor
-c RAS--KEEP
-      do j = 1, nbod
+      do j = 2, nbod
         temp = rce(j) * 1.2d0
-c        write(*,*) j, temp
         xmin(j) = xmin(j)  -  temp
         xmax(j) = xmax(j)  +  temp
         ymin(j) = ymin(j)  -  temp
@@ -1761,15 +1607,11 @@ c        write(*,*) j, temp
       end do
 c
 c Check for close encounters between each pair of objects
-c ras -- changed from nbig to nbod KEEP i=1
-      do i = 1, nbod
+      do i = 2, nbig
         do j = i + 1, nbod
           if (   xmax(i).ge.xmin(j).and.xmax(j).ge.xmin(i)
      %      .and.ymax(i).ge.ymin(j).and.ymax(j).ge.ymin(i)
      %      .and.stat(i).ge.0.and.stat(j).ge.0) then
-             
-c ras
-c             write(*,*) "pl", i, " CE with pl", j
 c
 c If the X-Y boxes for this pair overlap, check circumstances more closely
             dx0 = x0(1,i) - x0(1,j)
@@ -1797,41 +1639,26 @@ c Estimate minimum separation during the time interval, using interpolation
             d2ce   = d2ce  * d2ce
             d2hit  = d2hit * d2hit
             d2near = d2hit * 4.d0
-c ras
-c            WRITE(*,*) (d2min.le.d2ce.and.d0t*h.le.0.and.d1t*h.ge.0),
-c     %        (d2min.le.d2hit)
 c
 c If the minimum separation qualifies as an encounter or if a collision
 c is in progress, store details
-
-c            WRITE(*,*) d2min,d2near,i,j,(d2min.le.d2near)
             if ((d2min.le.d2ce.and.d0t*h.le.0.and.d1t*h.ge.0)
      %        .or.(d2min.le.d2hit)) then
-c ras
-c              WRITE(*,*) "We got one, Cap'n!",i-2,j-2,rce(i),rce(j),
-c     %          d2min
-c              WRITE(*,*) d2ce,h,d0t,d1t,d2hit
               nclo = nclo + 1
               if (nclo.gt.CMAX) then
-c ras
-c                WRITE(*,*) "output file"
  230            open (23,file=outfile,status='old',access='append',
      %            err=230)
                 write (23,'(/,2a,/,a)') mem(121)(1:lmem(121)),
      %            mem(132)(1:lmem(132)),mem(82)(1:lmem(82))
                 close (23)
               else
-c ras
-c                WRITE(*,*) "else loop"
                 tclo(nclo) = tmin + time
                 dclo(nclo) = sqrt (max(0.d0,d2min))
                 iclo(nclo) = i
                 jclo(nclo) = j
-c                WRITE(*,*) "else loop",dclo(nclo)
 c
 c Make sure the more massive body is listed first
                 if (m(j).gt.m(i).and.j.le.nbig) then
-c                  WRITE(*,*) "massive"
                   iclo(nclo) = j
                   jclo(nclo) = i
                 end if
@@ -1855,11 +1682,8 @@ c Make linear interpolation to get coordinates at time of closest approach
             end if
 c
 c Check for a near miss or collision
-c ras        Original:    if (d2min.le.d2near) then
-            if ((d2min.le.d2near).and.((i.ne.1).or.(j.ne.2))) then
+            if (d2min.le.d2near) then
               nhit = nhit + 1
-c ras
-c             WRITE(*,*) "near miss or collision",nhit,d2min,d2near
               ihit(nhit) = i
               jhit(nhit) = j
               thit(nhit) = tmin + time
@@ -4341,9 +4165,6 @@ c
 c
 c------------------------------------------------------------------------------
 c
-
-c !RAS
-c      WRITE(*,*) t
       return
       end
 c
@@ -5837,8 +5658,6 @@ c Check if information file exists, and append a continuation message
      %    lmem(88),' ',1,outfile(3),80)
  320    open(23,file=outfile(3),status='old',access='append',err=320)
       else
-c     RAS
-      WRITE(*,*) 'here now',outfile(3)
 c
 c If new integration, check information file doesn't exist, and then create it
         inquire (file=outfile(3), exist=test)
@@ -6287,25 +6106,6 @@ c
 c Error reading epoch of Big bodies
  667  call mio_err (23,mem(81),lmem(81),mem(101),lmem(101),' ',1,
      %  mem(83),lmem(83))
-
-
-c------------------------------------------------------------------------------
-c RAS
-c FROM http://www.astro.keele.ac.uk/~dra/mercury/
-c Always initialize the variable array STAT for all bodies with 0.
-c------------------------------------------------------------------------------
-
-      do j = 2, nbod
-        stat(j) = 0
-      end do
-
-c------------------------------------------------------------------------------
-c------------------------------------------------------------------------------
- 
-
-
-
-
 c
 c------------------------------------------------------------------------------
 c
@@ -8327,137 +8127,3 @@ c...  Executable code
 	return
 	end    ! orbel_zget
 c----------------------------------------------------------------------
-
-c RAS
-c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-c
-c      MCO_H2Jras.FOR    (ErikSoft   2 March 2001)
-c
-c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-c
-c Author: John E. Chambers
-c
-c Converts coordinates with respect to the central body to Jacobi coordinates.
-c
-c N.B. The coordinates respect to the central body for the small bodies
-c ===  are assumed to be equal to their Jacobi coordinates.
-c
-c------------------------------------------------------------------------------
-c
-      subroutine mco_h2jras (nbod,nbig,mm,xhh,vhh,x,v)
-c
-      implicit none
-      include 'mercury.inc'
-c
-c Input/Output
-      integer nbod,nbig
-      real*8 mm(nbig),xhh(3,nbig),vhh(3,nbig),x(3,nbig)
-      real*8 v(3,nbig)
-c
-c Local
-      integer j,k
-      integer dist2(NMAX)
-      real*8 mtot, mx, my, mz, mu, mv, mw, temp, temp2
-      real*8 xh(3,NMAX),vh(3,NMAX),dist(NMAX),m(NMAX)
-      real*8 xtemp(3,NMAX),vtemp(3,NMAX)
-c
-c------------------------------------------------------------------------------c
-      
-      do j=1,nbig
-        dist(j) = (xhh(1,j)*xhh(1,j)+xhh(2,j)*xhh(2,j)+
-     %  xhh(3,j)*xhh(3,j))**0.5
-        dist2(j) = j
-      enddo
-
-c      dist(1)=dist(12)-3.
-c from http://faculty.kfupm.edu.sa/ICS/muhtaseb/Research/FORTRAN77Chap9.pdf
-c      WRITE(*,*) dist
-      do 10 j=1,nbig-1
-         do 20 k=j+1,nbig
-            if (dist(j) .gt. dist(k)) then
-               temp2=dist2(j)
-               dist2(j)=dist2(k)
-               dist2(k)=temp2
-            endif
- 20      continue
- 10    continue
-
-c      WRITE(*,*) dist
-c      WRITE(*,*) dist2
-
-      do j=1,nbig
-        k = dist2(j)
-        xh(1,k) = xhh(1,j)
-        xh(2,k) = xhh(2,j)
-        xh(3,k) = xhh(3,j)
-        vh(1,k) = vhh(1,j)
-        vh(2,k) = vhh(2,j)
-        vh(3,k) = vhh(3,j)
-        m(k)=mm(j)
-      enddo
-c      WRITE(*,*) m(7),m(8)
-    
-      mtot = m(2)
-      x(1,2) = xh(1,2)
-      x(2,2) = xh(2,2)
-      x(3,2) = xh(3,2)
-      v(1,2) = vh(1,2)
-      v(2,2) = vh(2,2)
-      v(3,2) = vh(3,2)
-      mx = m(2) * xh(1,2)
-      my = m(2) * xh(2,2)
-      mz = m(2) * xh(3,2)
-      mu = m(2) * vh(1,2)
-      mv = m(2) * vh(2,2)
-      mw = m(2) * vh(3,2)
-c
-      do j = 3, nbig - 1
-        temp = 1.d0 / (mtot + m(1))
-        mtot = mtot + m(j)
-        x(1,j) = xh(1,j)  -  temp * mx
-        x(2,j) = xh(2,j)  -  temp * my
-        x(3,j) = xh(3,j)  -  temp * mz
-        v(1,j) = vh(1,j)  -  temp * mu
-        v(2,j) = vh(2,j)  -  temp * mv
-        v(3,j) = vh(3,j)  -  temp * mw
-        mx = mx  +  m(j) * xh(1,j)
-        my = my  +  m(j) * xh(2,j)
-        mz = mz  +  m(j) * xh(3,j)
-        mu = mu  +  m(j) * vh(1,j)
-        mv = mv  +  m(j) * vh(2,j)
-        mw = mw  +  m(j) * vh(3,j)
-      enddo
-c
-      if (nbig.gt.2) then
-        temp = 1.d0 / (mtot + m(1))
-        x(1,nbig) = xh(1,nbig)  -  temp * mx
-        x(2,nbig) = xh(2,nbig)  -  temp * my
-        x(3,nbig) = xh(3,nbig)  -  temp * mz
-        v(1,nbig) = vh(1,nbig)  -  temp * mu
-        v(2,nbig) = vh(2,nbig)  -  temp * mv
-        v(3,nbig) = vh(3,nbig)  -  temp * mw
-      end if
-
-      do j=1,nbig
-         xtemp(1,j) = x(1,j)
-         xtemp(2,j) = x(2,j)
-         xtemp(3,j) = x(3,j)
-         vtemp(1,j) = v(1,j)
-         vtemp(2,j) = v(2,j)
-         vtemp(3,j) = v(3,j)
-      enddo
-      do j=1,nbig
-         k=dist2(j)
-         x(1,j)=xtemp(1,k)
-         x(2,j)=xtemp(2,k)
-         x(3,j)=xtemp(3,k)
-         v(1,j)=vtemp(1,k)
-         v(2,j)=vtemp(2,k)
-         v(3,j)=vtemp(3,k)
-        
-      enddo
-c
-c------------------------------------------------------------------------------
-c
-      return
-      end
