@@ -12,6 +12,15 @@ How to compile and run
 ----------------------
 Use your favorite fortran compiler to create an executable.  For instance, on Linux or Mac, try
 
+.. code:: python
+
+   import rebound
+   sim = rebound.Simulation()
+   sim.add(m=1.0)
+   sim.add(m=1.0e-3, a=1.0)
+   sim.integrate(1000.)
+   sim.status()
+
 .. code::
    gfortran -o mercury6 mercury6_ras.for
    gfortran -o close6 close6_ras.for
