@@ -1,40 +1,45 @@
 c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
-c      CLOSE6.FOR    (ErikSoft   5 June 2001)
+c      ELEMENT6.FOR    (ErikSoft   5 June 2001)
 c
 c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
 c Author: John E. Chambers
 c
-c Makes output files containing details of close encounters that occurred
-c during an integration using Mercury6 or higher.
+c Makes output files containing Keplerian orbital elements from data created
+c by Mercury6 and higher.
 c
-c The user specifies the names of the required objects in the file close.in
+c The user specifies the names of the required objects in the file elements.in
+c See subroutine M_FORMAT for the identities of each element in the EL array
+c e.g. el(1)=a, el(2)=e etc.
 c
 c------------------------------------------------------------------------------
 c
       implicit none
       include 'mercury.inc'
 c
-      integer itmp,i,j,k,l,iclo,jclo,precision,lenin
-      integer nmaster,nopen,nwait,nbig,nsml,nsub,lim(2,100)
+      integer itmp,i,j,k,l,iback(NMAX),precision,lenin
+      integer nmaster,nopen,nwait,nbig,nsml,nbod,nsub,lim(2,100)
       integer year,month,timestyle,line_num,lenhead,lmem(NMESS)
-      integer nchar,algor,allflag,firstflag,ninfile
-      integer unit(NMAX),master_unit(NMAX)
-      real*8 time,t0,t1,rmax,rcen,rfac,dclo,mcen,jcen(3)
+      integer nchar,algor,centre,allflag,firstflag,ninfile,nel,iel(22)
+      integer nbod1,nbig1,unit(NMAX),code(NMAX),master_unit(NMAX)
+      real*8 time,teval,t0,t1,tprevious,rmax,rcen,rfac,rhocgs,temp
+      real*8 mcen,jcen(3),el(22,NMAX),s(3),is(NMAX),ns(NMAX),a(NMAX)
       real*8 mio_c2re, mio_c2fl,fr,theta,phi,fv,vtheta,vphi,gm
-      real*8 x1(3),x2(3),v1(3),v2(3),m(NMAX)
-      real*8 a1,a2,e1,e2,i1,i2,p1,p2,n1,n2,l1,l2,q1,q2
+      real*8 x(3,NMAX),v(3,NMAX),xh(3,NMAX),vh(3,NMAX),m(NMAX)
       logical test
       character*250 string,fout,header,infile(50)
       character*80 mem(NMESS),cc,c(NMAX)
       character*8 master_id(NMAX),id(NMAX)
       character*5 fin
       character*1 check,style,type,c1
+      character*2 c2
 c
 c------------------------------------------------------------------------------
 c
       allflag = 0
+      tprevious = 0.d0
+      rhocgs = AU * AU * AU * K2 / MSUN
 c
 c Read in output messages
       inquire (file='message.in', exist=test)
@@ -50,12 +55,12 @@ c Read in output messages
   20  close (14)
 c
 c Open file containing parameters for this programme
-      inquire (file='close.in', exist=test)
+      inquire (file='element.in', exist=test)
       if (test) then
-        open (10, file='close.in', status='old')
+        open (10, file='element.in', status='old')
       else
         call mio_err (6,mem(81),lmem(81),mem(88),lmem(88),' ',1,
-     %    'close.in',9)
+     %    'element.in',9)
       end if
 c
 c Read number of input files
@@ -75,22 +80,42 @@ c Make sure all the input files exist
      %    lmem(88),' ',1,infile(j),80)
       end do
 c
+c What type elements does the user want?
+      centre = 0
+  45  read (10,'(a250)') string
+      if (string(1:1).eq.')') goto 45
+      call mio_spl (250,string,nsub,lim)
+      c2 = string(lim(1,nsub):(lim(1,nsub)+1))
+      if (c2.eq.'ce'.or.c2.eq.'CE'.or.c2.eq.'Ce') then
+        centre = 0
+      else if (c2.eq.'ba'.or.c2.eq.'BA'.or.c2.eq.'Ba') then
+        centre = 1
+      else if (c2.eq.'ja'.or.c2.eq.'JA'.or.c2.eq.'Ja') then
+        centre = 2
+      else
+        call mio_err (6,mem(81),lmem(81),mem(107),lmem(107),' ',1,
+     %    '       Check element.in',23)
+      end if
+c
 c Read parameters used by this programme
       timestyle = 1
-      do j = 1, 2
+      do j = 1, 4
   50    read (10,'(a250)') string
         if (string(1:1).eq.')') goto 50
         call mio_spl (250,string,nsub,lim)
         c1 = string(lim(1,nsub):lim(2,nsub))
-        if (j.eq.1.and.(c1.eq.'d'.or.c1.eq.'D')) timestyle = 0
-        if (j.eq.2.and.(c1.eq.'y'.or.c1.eq.'Y')) timestyle = timestyle+2
+        if (j.eq.1) read (string(lim(1,nsub):lim(2,nsub)),*) teval
+        teval = abs(teval) * .999d0
+        if (j.eq.2.and.(c1.eq.'d'.or.c1.eq.'D')) timestyle = 0
+        if (j.eq.3.and.(c1.eq.'y'.or.c1.eq.'Y')) timestyle = timestyle+2
+        if (j.eq.4) call m_format (string,timestyle,nel,iel,fout,header,
+     %    lenhead)
       end do
 c
 c Read in the names of the objects for which orbital elements are required
       nopen = 0
       nwait = 0
       nmaster = 0
-      call m_formce (timestyle,fout,header,lenhead)
   60  continue
         read (10,'(a250)',end=70) string
         call mio_spl (250,string,nsub,lim)
@@ -104,7 +129,7 @@ c Either open an aei file for this object or put it on the waiting list
         if (nopen.lt.NFILES) then
           nopen = nopen + 1
           master_unit(nmaster) = 10 + nopen
-          call mio_aei (master_id(nmaster),'.clo',master_unit(nmaster),
+          call mio_aei (master_id(nmaster),'.aei',master_unit(nmaster),
      %      header,lenhead,mem,lmem)
         else
           nwait = nwait + 1
@@ -113,7 +138,7 @@ c Either open an aei file for this object or put it on the waiting list
       goto 60
 c
   70  continue
-c If no objects are listed in CLOSE.IN assume that all objects are required
+c If no objects are listed in ELEMENT.IN assume that all objects are required
       if (nopen.eq.0) allflag = 1
       close (10)
 c
@@ -138,7 +163,7 @@ c Check if this is an old style input file
         if (ichar(check).eq.12.and.(style.eq.'0'.or.style.eq.'1'.or.
      %    style.eq.'2'.or.style.eq.'3'.or.style.eq.'4')) then
           write (*,'(/,2a)') ' ERROR: This is an old style data file',
-     %      '        Try running m_close5.for instead.'
+     %      '        Try running m_elem5.for instead.'
           stop
         end if
         if (ichar(check).ne.12) goto 666
@@ -153,13 +178,9 @@ c
 c
 c Decompress the time, number of objects, central mass and J components etc.
           time = mio_c2fl (cc(1:8))
-          if (firstflag.eq.0) then
-            t0 = time
-            firstflag = 1
-          end if
           nbig = int(.5d0 + mio_c2re(cc(9:16), 0.d0, 11239424.d0, 3))
           nsml = int(.5d0 + mio_c2re(cc(12:19),0.d0, 11239424.d0, 3))
-          mcen = mio_c2fl (cc(15:22)) * K2
+          mcen = mio_c2fl (cc(15:22))
           jcen(1) = mio_c2fl (cc(23:30))
           jcen(2) = mio_c2fl (cc(31:38))
           jcen(3) = mio_c2fl (cc(39:46))
@@ -185,7 +206,31 @@ c For each object decompress its name, code number, mass, spin and density
           do j = 1, nbig + nsml
             k = int(.5d0 + mio_c2re(c(j)(1:8),0.d0,11239424.d0,3))
             id(k) = c(j)(4:11)
-            m(k)  = mio_c2fl (c(j)(12:19)) * K2
+            el(18,k) = mio_c2fl (c(j)(12:19))
+            s(1) = mio_c2fl (c(j)(20:27))
+            s(2) = mio_c2fl (c(j)(28:35))
+            s(3) = mio_c2fl (c(j)(36:43))
+            el(21,k) = mio_c2fl (c(j)(44:51))
+c
+c Calculate spin rate and longitude & inclination of spin vector
+            temp = sqrt(s(1)*s(1) + s(2)*s(2) + s(3)*s(3))
+            if (temp.gt.0) then
+              call mce_spin (1.d0,el(18,k)*K2,temp*K2,el(21,k)*
+     %            rhocgs,el(20,k))
+              temp = s(3) / temp
+              if (abs(temp).lt.1) then
+                is(k) = acos (temp)
+                ns(k) = atan2 (s(1), -s(2))
+              else
+                if (temp.gt.0) is(k) = 0.d0
+                if (temp.lt.0) is(k) = PI
+                ns(k) = 0.d0
+              end if
+            else
+              el(20,k) = 0.d0
+              is(k) = 0.d0
+              ns(k) = 0.d0
+            end if
 c
 c Find the object on the master list
             unit(k) = 0
@@ -203,7 +248,7 @@ c Either open an aei file for this object or put it on the waiting list
                 if (nopen.lt.NFILES) then
                   nopen = nopen + 1
                   master_unit(nmaster) = 10 + nopen
-                  call mio_aei (master_id(nmaster),'.clo',
+                  call mio_aei (master_id(nmaster),'.aei',
      %              master_unit(nmaster),header,lenhead,mem,lmem)
                 else
                   nwait = nwait + 1
@@ -218,51 +263,106 @@ c Either open an aei file for this object or put it on the waiting list
 c
 c------------------------------------------------------------------------------
 c
-c  IF  NORMAL  INPUT,  READ  COMPRESSED  DATA  ON  THE  CLOSE  ENCOUNTER
+c  IF  NORMAL  INPUT,  READ  COMPRESSED  ORBITAL  VARIABLES  FOR  ALL  OBJECTS
 c
         else if (type.eq.'b') then
           line_num = line_num + 1
-          read (10,'(3x,a70)',err=666) cc(1:70)
+          read (10,'(3x,a14)',err=666) cc(1:14)
 c
-c Decompress time, distance and orbital variables for each object
+c Decompress the time and the number of objects
           time = mio_c2fl (cc(1:8))
-          iclo = int(.5d0 + mio_c2re(cc(9:16),  0.d0, 11239424.d0, 3))
-          jclo = int(.5d0 + mio_c2re(cc(12:19), 0.d0, 11239424.d0, 3))
-          if (iclo.gt.NMAX.or.jclo.gt.NMAX) then
-            write (*,'(/,2a)') mem(81)(1:lmem(81)),
-     %        mem(90)(1:lmem(90))
-            stop
-          end if
-          dclo = mio_c2fl (cc(15:22))
-          fr     = mio_c2re (cc(23:30), 0.d0, rfac,  4)
-          theta  = mio_c2re (cc(27:34), 0.d0, PI,    4)
-          phi    = mio_c2re (cc(31:38), 0.d0, TWOPI, 4)
-          fv     = mio_c2re (cc(35:42), 0.d0, 1.d0,  4)
-          vtheta = mio_c2re (cc(39:46), 0.d0, PI,    4)
-          vphi   = mio_c2re (cc(43:50), 0.d0, TWOPI, 4)
-          call mco_ov2x (rcen,rmax,mcen,m(iclo),fr,theta,phi,fv,
-     %      vtheta,vphi,x1(1),x1(2),x1(3),v1(1),v1(2),v1(3))
+          nbig = int(.5d0 + mio_c2re(cc(9:16),  0.d0, 11239424.d0, 3))
+          nsml = int(.5d0 + mio_c2re(cc(12:19), 0.d0, 11239424.d0, 3))
+          nbod = nbig + nsml
+          if (firstflag.eq.0) t0 = time
 c
-          fr     = mio_c2re (cc(47:54), 0.d0, rfac,  4)
-          theta  = mio_c2re (cc(51:58), 0.d0, PI,    4)
-          phi    = mio_c2re (cc(55:62), 0.d0, TWOPI, 4)
-          fv     = mio_c2re (cc(59:66), 0.d0, 1.d0,  4)
-          vtheta = mio_c2re (cc(63:70), 0.d0, PI,    4)
-          vphi   = mio_c2re (cc(67:74), 0.d0, TWOPI, 4)
-          call mco_ov2x (rcen,rmax,mcen,m(jclo),fr,theta,phi,fv,
-     %      vtheta,vphi,x2(1),x2(2),x2(3),v2(1),v2(2),v2(3))
+c Read in strings containing compressed data for each object
+          do j = 1, nbod
+            line_num = line_num + 1
+            read (10,fin,err=666) c(j)(1:lenin)
+          end do
 c
-c Convert to Keplerian elements
-          gm = mcen + m(iclo)
-          call mco_x2el (gm,x1(1),x1(2),x1(3),v1(1),v1(2),v1(3),
-     %      q1,e1,i1,p1,n1,l1)
-          a1 = q1 / (1.d0 - e1)
-          gm = mcen + m(jclo)
-          call mco_x2el (gm,x2(1),x2(2),x2(3),v2(1),v2(2),v2(3),
-     %      q2,e2,i2,p2,n2,l2)
-          a2 = q2 / (1.d0 - e2)
-          i1 = i1 / DR
-          i2 = i2 / DR
+c Look for objects for which orbital elements are required
+          m(1) = mcen * K2
+          do j = 1, nbod
+            code(j) = int(.5d0 + mio_c2re(c(j)(1:8), 0.d0,
+     %        11239424.d0, 3))
+            if (code(j).gt.NMAX) then
+              write (*,'(/,2a)') mem(81)(1:lmem(81)),
+     %          mem(90)(1:lmem(90))
+              stop
+            end if
+c
+c Decompress orbital variables for each object
+            l = j + 1
+            m(l) = el(18,code(j)) * K2
+            fr     = mio_c2re (c(j)(4:11), 0.d0, rfac,  nchar)
+            theta  = mio_c2re (c(j)(4+  nchar:11+  nchar), 0.d0, PI,
+     %               nchar)
+            phi    = mio_c2re (c(j)(4+2*nchar:11+2*nchar), 0.d0, TWOPI,
+     %               nchar)
+            fv     = mio_c2re (c(j)(4+3*nchar:11+3*nchar), 0.d0, 1.d0,
+     %               nchar)
+            vtheta = mio_c2re (c(j)(4+4*nchar:11+4*nchar), 0.d0, PI,
+     %               nchar)
+            vphi   = mio_c2re (c(j)(4+5*nchar:11+5*nchar), 0.d0, TWOPI,
+     %               nchar)
+            call mco_ov2x (rcen,rmax,m(1),m(l),fr,theta,phi,fv,
+     %        vtheta,vphi,x(1,l),x(2,l),x(3,l),v(1,l),v(2,l),v(3,l))
+            el(16,code(j)) = sqrt(x(1,l)*x(1,l) + x(2,l)*x(2,l)
+     %                     + x(3,l)*x(3,l))
+          end do
+c
+c Convert to barycentric, Jacobi or close-binary coordinates if desired
+          nbod1 = nbod + 1
+          nbig1 = nbig + 1
+          call mco_iden (jcen,nbod1,nbig1,temp,m,x,v,xh,vh)
+          if (centre.eq.1) call mco_h2b (jcen,nbod1,nbig1,temp,m,xh,vh,
+     %      x,v)
+          if (centre.eq.2) call mco_h2j (jcen,nbod1,nbig1,temp,m,xh,vh,
+     %      x,v)
+          if (centre.eq.0.and.algor.eq.11) call mco_h2cb (jcen,nbod1,
+     %      nbig1,temp,m,xh,vh,x,v)
+c
+c Put Cartesian coordinates into element arrays
+          do j = 1, nbod
+            k = code(j)
+            l = j + 1
+            el(10,k) = x(1,l)
+            el(11,k) = x(2,l)
+            el(12,k) = x(3,l)
+            el(13,k) = v(1,l)
+            el(14,k) = v(2,l)
+            el(15,k) = v(3,l)
+c
+c Convert to Keplerian orbital elements
+            gm = (mcen + el(18,k)) * K2
+            call mco_x2el (gm,el(10,k),el(11,k),el(12,k),el(13,k),
+     %        el(14,k),el(15,k),el(8,k),el(2,k),el(3,k),el(7,k),
+     %        el(5,k),el(6,k))
+            el(1,k) = el(8,k) / (1.d0 - el(2,k))
+            el(9,k) = el(1,k) * (1.d0 + el(2,k))
+            el(4,k) = mod(el(7,k) - el(5,k) + TWOPI, TWOPI)
+c Calculate true anomaly
+            if (el(2,k).eq.0) then
+              el(17,k) = el(6,k)
+            else
+              temp = (el(8,k)*(1.d0 + el(2,k))/el(16,k) - 1.d0) /el(2,k)
+              temp = sign (min(abs(temp), 1.d0), temp)
+              el(17,k) = acos(temp)
+              if (sin(el(6,k)).lt.0) el(17,k) = TWOPI - el(17,k)
+            end if
+c Calculate obliquity
+            el(19,k) = acos (cos(el(3,k))*cos(is(k))
+     %        + sin(el(3,k))*sin(is(k))*cos(ns(k) - el(5,k)))
+c
+c Convert angular elements from radians to degrees
+            do l = 3, 7
+              el(l,k) = mod(el(l,k) / DR, 360.d0)
+            end do
+            el(17,k) = el(17,k) / DR
+            el(19,k) = el(19,k) / DR
+          end do
 c
 c Convert time to desired format
           if (timestyle.eq.0) t1 = time
@@ -270,62 +370,24 @@ c Convert time to desired format
           if (timestyle.eq.2) t1 = time - t0
           if (timestyle.eq.3) t1 = (time - t0) / 365.25d0
 c
-c Write encounter details to appropriate files
-          if (isbinary) then
-c RAS Changed to hack output of central body name (cenname from mercury.inc)
-            if (timestyle.eq.1) then
-              if (unit(iclo).ge.10) then
-                if (jclo.eq.0) then
-                 write (unit(iclo),fout) year,month,
-     %           t1,cenname,dclo,a1,e1,i1,a2,e2,i2
-                else 
-                 write (unit(iclo),fout) year,month,
-     %           t1,id(jclo),dclo,a1,e1,i1,a2,e2,i2
-                 endif
-              endif
-              if (unit(jclo).ge.10) then
-                if (iclo.eq.0) then
-                 write (unit(jclo),fout) year,month,
-     %           t1,cenname,dclo,a2,e2,i2,a1,e1,i1
-                else 
-                 write (unit(jclo),fout) year,month,
-     %           t1,id(iclo),dclo,a2,e2,i2,a1,e1,i1
-                endif
-              endif
-            else
-              if (unit(iclo).ge.10) then
-                if (jclo.eq.0) then 
-                 write (unit(iclo),fout) t1,cenname,
-     %           dclo,a1,e1,i1,a2,e2,i2
-                else  
-                 write (unit(iclo),fout) t1,id(jclo),
-     %           dclo,a1,e1,i1,a2,e2,i2
-                endif
-              endif
-              if (unit(jclo).ge.10)  then
-                if (iclo.eq.0) then
-                 write (unit(jclo),fout) t1,cenname,
-     %           dclo,a2,e2,i2,a1,e1,i1
-                else
-                 write (unit(jclo),fout) t1,id(iclo),
-     %           dclo,a2,e2,i2,a1,e1,i1
-                endif
-              endif
-            end if
-          else
-            if (timestyle.eq.1) then
-              if (unit(iclo).ge.10) write (unit(iclo),fout) year,month,
-     %           t1,id(jclo),dclo,a1,e1,i1,a2,e2,i2
+c If output is required at this epoch, write elements to appropriate files
+          if (firstflag.eq.0.or.abs(time-tprevious).ge.teval) then
+            firstflag = 1
+            tprevious = time
 c
-              if (unit(jclo).ge.10) write (unit(jclo),fout) year,month,
-     %           t1,id(iclo),dclo,a2,e2,i2,a1,e1,i1
-            else
-              if (unit(iclo).ge.10) write (unit(iclo),fout) t1,id(jclo),
-     %           dclo,a1,e1,i1,a2,e2,i2
-              if (unit(jclo).ge.10) write (unit(jclo),fout) t1,id(iclo),
-     %           dclo,a2,e2,i2,a1,e1,i1
-            end if
-          endif
+c Write required elements to the appropriate aei file
+            do j = 1, nbod
+              k = code(j)
+              if (unit(k).ge.10) then
+                if (timestyle.eq.1) then
+                  write (unit(k),fout) year,month,t1,(el(iel(l),k),l=1,
+     %              nel)
+                else
+                  write (unit(k),fout) t1,(el(iel(l),k),l=1,nel)
+                end if
+              end if
+            end do
+          end if
 c
 c------------------------------------------------------------------------------
 c
@@ -350,12 +412,12 @@ c If input file is corrupted, try to continue from next uncorrupted time slice
         line_num = line_num - 1
         backspace 10
 c
-c Move on to the next file containing close encounter data
+c Move on to the next file containing integration data
  900    continue
         close (10)
       end do
 c
-c Close clo files
+c Close aei files
       do j = 1, nopen
         close (10+j)
       end do
@@ -369,62 +431,49 @@ c If some objects remain on waiting list, read through input files again
             nopen = nopen + 1
             nwait = nwait - 1
             master_unit(j) = 10 + nopen
-            call mio_aei (master_id(j),'.clo',master_unit(j),header,
+            call mio_aei (master_id(j),'.aei',master_unit(j),header,
      %        lenhead,mem,lmem)
           end if
         end do
         goto 90
       end if
 c
-      end
-c
-c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-c
-c      M_FORMCE.FOR    (ErikSoft  30 November 1999)
-c
-c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-c
-c Author: John E. Chambers
-c
-c
 c------------------------------------------------------------------------------
 c
-      subroutine m_formce (timestyle,fout,header,lenhead)
+c  CREATE  A  SUMMARY  OF  FINAL  MASSES  AND  ELEMENTS
 c
-      implicit none
-c
-c Input/Output
-      integer timestyle,lenhead
-      character*250 fout,header
-c
-c------------------------------------------------------------------------------
+      open (10, file='element.out', status='unknown')
+      rewind 10
 c
       if (timestyle.eq.0.or.timestyle.eq.2) then
-        header(1:19) = '    Time (days)    '
-        header(20:58) = '  Object   dmin (AU)     a1       e1    '
-        header(59:90) = '   i1       a2       e2       i2'
-        lenhead = 90
-        fout = '(1x,f18.5,1x,a8,1x,f10.8,2(1x,f9.4,1x,f8.6,1x,f7.3))'
-      else
-        if (timestyle.eq.1) then
-          header(1:23) = '     Year/Month/Day    '
-          header(24:62) = '  Object   dmin (AU)     a1       e1    '
-          header(63:94) = '   i1       a2       e2       i2'
-          lenhead = 94
-          fout(1:37) = '(1x,i10,1x,i2,1x,f8.5,1x,a8,1x,f10.8,'
-          fout(38:64) = '2(1x,f9.4,1x,f8.6,1x,f7.3))'
-        else
-          header(1:19) = '    Time (years)   '
-          header(20:58) = '  Object   dmin (AU)     a1       e1    '
-          header(59:90) = '   i1       a2       e2       i2'
-          fout = '(1x,f18.7,1x,a8,1x,f10.8,2(1x,f9.4,1x,f8.6,1x,f7.3))'
-          lenhead = 90
-        end if
+        write (10,'(/,a,f18.5,/)') ' Time (days): ',t1
+      else if (timestyle.eq.1) then
+        write (10,'(/,a,i10,1x,i2,1x,f8.5,/)') ' Date: ',year,month,t1
+      else if (timestyle.eq.3) then
+        write (10,'(/,a,f18.7,/)') ' Time (years): ',t1
       end if
+      write (10,'(2a,/)') '              a        e       i      mass',
+     %  '    Rot/day  Obl'
+c
+c Sort surviving objects in order of increasing semi-major axis
+      do j = 1, nbod
+        k = code(j)
+        a(j) = el(1,k)
+      end do
+      call mxx_sort (nbod,a,iback)
+c
+c Write values of a, e, i and m for surviving objects in an output file
+      do j = 1, nbod
+        k = code(iback(j))
+        write (10,213) id(k),el(1,k),el(2,k),el(3,k),el(18,k),el(20,k),
+     %      el(19,k)
+      end do
 c
 c------------------------------------------------------------------------------
 c
-      return
+c Format statements
+ 213  format (1x,a8,1x,f8.4,1x,f7.5,1x,f7.3,1p,e11.4,0p,1x,f6.3,1x,f6.2)
+c
       end
 c
 c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -471,6 +520,58 @@ c
         u = v1 * sin(vtheta) * cos(vphi)
         v = v1 * sin(vtheta) * sin(vphi)
         w = v1 * cos(vtheta)
+c
+c------------------------------------------------------------------------------
+c
+      return
+      end
+c
+c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+c
+c      MCE_SPIN.FOR    (ErikSoft  2 December 1999)
+c
+c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+c
+c Author: John E. Chambers
+c
+c Calculates the spin rate (in rotations per day) for a fluid body given
+c its mass, spin angular momentum and density. The routine assumes the
+c body is a MacClaurin ellipsoid, whose axis ratio is defined by the
+c quantity SS = SQRT(A^2/C^2 - 1), where A and C are the
+c major and minor axes.
+c
+c------------------------------------------------------------------------------
+c
+      subroutine mce_spin (g,mass,spin,rho,rote)
+c
+      implicit none
+      include 'mercury.inc'
+c
+c Input/Output
+      real*8 g,mass,spin,rho,rote
+c
+c Local
+      integer k
+      real*8 ss,s2,f,df,z,dz,tmp0,tmp1,t23
+c
+c------------------------------------------------------------------------------
+c
+      t23 = 2.d0 / 3.d0
+      tmp1 = spin * spin / (2.d0 * PI * rho * g) 
+     %     * ( 250.d0*PI*PI*rho*rho / (9.d0*mass**5) )**t23
+c
+c Calculate SS using Newton's method
+      ss = 1.d0
+      do k = 1, 20
+        s2 = ss * ss
+        tmp0 = (1.d0 + s2)**t23
+        call m_sfunc (ss,z,dz)
+        f = z * tmp0  -  tmp1
+        df = tmp0 * ( dz  +  4.d0 * ss * z / (3.d0*(1.d0 + s2)) )
+        ss = ss - f/df
+      end do
+c
+      rote = sqrt(TWOPI * g * rho * z) / TWOPI
 c
 c------------------------------------------------------------------------------
 c
@@ -1524,6 +1625,222 @@ c
       end if
 c
   99  continue
+c
+c------------------------------------------------------------------------------
+c
+      return
+      end
+c
+c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+c
+c      MXX_SORT.FOR    (ErikSoft 24 May 1997)
+c
+c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+c
+c Author: John E. Chambers
+c
+c Sorts an array X, of size N, using Shell's method. Also returns an array
+c INDEX that gives the original index of every item in the sorted array X.
+c
+c N.B. The maximum array size is 29523.
+c ===
+c
+c------------------------------------------------------------------------------
+c
+      subroutine mxx_sort (n,x,index)
+c
+      implicit none
+c
+c Input/Output
+      integer n,index(n)
+      real*8 x(n)
+c
+c Local
+      integer i,j,k,l,m,inc,incarr(9),iy
+      real*8 y
+      data incarr/1,4,13,40,121,364,1093,3280,9841/
+c
+c------------------------------------------------------------------------------
+c
+      do i = 1, n
+        index(i) = i
+      end do
+c
+      m = 0
+  10  m = m + 1
+      if (incarr(m).lt.n) goto 10
+      m = m - 1
+c
+      do i = m, 1, -1
+        inc = incarr(i)
+        do j = 1, inc
+          do k = inc, n - j, inc
+            y = x(j+k)
+            iy = index(j+k)
+            do l = j + k - inc, j, -inc
+              if (x(l).le.y) goto 20
+              x(l+inc) = x(l)
+              index(l+inc) = index(l)
+            end do
+  20        x(l+inc) = y
+            index(l+inc) = iy
+          end do
+        end do
+      end do
+c
+c------------------------------------------------------------------------------
+c
+      return
+      end
+c
+c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+c
+c      M_SFUNC.FOR     (ErikSoft  14 November 1998)
+c
+c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+c
+c Calculates Z = [ (3 + S^2)arctan(S) - 3S ] / S^3 and its derivative DZ,
+c for S > 0.
+c
+c------------------------------------------------------------------------------
+c
+      subroutine m_sfunc (s,z,dz)
+c
+      implicit none
+c
+c Input/Output
+      real*8 s, z, dz
+c
+c Local
+      real*8 s2,s4,s6,s8,a
+c
+c------------------------------------------------------------------------------
+c
+      s2 = s * s
+c
+      if (s.gt.1.d-2) then
+        a  = atan(s)
+        z  = ((3.d0 + s2)*a - 3.d0*s) / (s * s2)
+        dz = (2.d0*s*a - 3.d0 + (3.d0+s2)/(1.d0+s2)) / (s * s2)
+     %     - 3.d0 * z / s
+      else
+        s4 = s2 * s2
+        s6 = s2 * s4
+        s8 = s4 * s4
+        z  = - .1616161616161616d0*s8
+     %       + .1904761904761905d0*s6
+     %       - .2285714285714286d0*s4
+     %       + .2666666666666667d0*s2
+        dz = s * (- 1.292929292929293d0*s6
+     %            + 1.142857142857143d0*s4
+     %            - 0.914285714285714d0*s2
+     %            + 0.533333333333333d0)
+      end if
+c
+c------------------------------------------------------------------------------
+c
+      return
+      end
+c
+c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+c
+c      M_FORMAT.FOR    (ErikSoft   31 January 2001)
+c
+c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+c
+c Author: John E. Chambers
+c
+c Makes an output format list and file header for the orbital-element files
+c created by M_ELEM3.FOR
+c Also identifies which orbital elements will be output for each object.
+c
+c------------------------------------------------------------------------------
+c
+      subroutine m_format (string,timestyle,nel,iel,fout,header,lenhead)
+c
+      implicit none
+      include 'mercury.inc'
+c
+c Input/Output
+      integer timestyle,nel,iel(22),lenhead
+      character*250 string,header,fout
+c
+c Local
+      integer i,j,pos,nsub,lim(2,20),formflag,lenfout,f1,f2,itmp
+      character*1 elcode(22)
+      character*4 elhead(22)
+c
+c------------------------------------------------------------------------------
+c
+      data elcode/ 'a','e','i','g','n','l','p','q','b','x','y','z',
+     %  'u','v','w','r','f','m','o','s','d','c'/
+      data elhead/ '  a ','  e ','  i ','peri','node','  M ','long',
+     %  '  q ','  Q ','  x ','  y ','  z ',' vx ',' vy ',' vz ','  r ',
+     %  '  f ','mass','oblq','spin','dens','comp'/
+c
+c Initialize header to a blank string
+      do i = 1, 250
+        header(i:i) = ' '
+      end do
+c
+c Create part of the format list and header for the required time style
+      if (timestyle.eq.0.or.timestyle.eq.2) then
+        fout(1:9) = '(1x,f18.5'
+        lenfout = 9
+        header(1:19) = '    Time (days)    '
+        lenhead = 19
+      else if (timestyle.eq.1) then
+        fout(1:21) = '(1x,i10,1x,i2,1x,f8.5'
+        lenfout = 21
+        header(1:23) = '    Year/Month/Day     '
+        lenhead = 23
+      else if (timestyle.eq.3) then
+        fout(1:9) = '(1x,f18.7'
+        lenfout = 9
+        header(1:19) = '    Time (years)   '
+        lenhead = 19
+      end if
+c
+c Identify the required elements
+      call mio_spl (250,string,nsub,lim)
+      do i = 1, nsub
+        do j = 1, 22
+          if (string(lim(1,i):lim(1,i)).eq.elcode(j)) iel(i) = j
+        end do
+      end do
+      nel = nsub
+c
+c For each element, see whether normal or exponential notation is required
+      do i = 1, nsub
+        formflag = 0
+        do j = lim(1,i)+1, lim(2,i)
+          if (formflag.eq.0) pos = j
+          if (string(j:j).eq.'.') formflag = 1
+          if (string(j:j).eq.'e') formflag = 2
+        end do
+c
+c Create the rest of the format list and header
+        if (formflag.eq.1) then
+          read (string(lim(1,i)+1:pos-1),*) f1
+          read (string(pos+1:lim(2,i)),*) f2
+          write (fout(lenfout+1:lenfout+10),'(a10)') ',1x,f  .  '
+          write (fout(lenfout+6:lenfout+7),'(i2)') f1
+          write (fout(lenfout+9:lenfout+10),'(i2)') f2
+          lenfout = lenfout + 10
+        else if (formflag.eq.2) then
+          read (string(lim(1,i)+1:pos-1),*) f1
+          write (fout(lenfout+1:lenfout+16),'(a16)') ',1x,1p,e  .  ,0p'
+          write (fout(lenfout+9:lenfout+10),'(i2)') f1
+          write (fout(lenfout+12:lenfout+13),'(i2)') f1 - 7
+          lenfout = lenfout + 16
+        end if
+        itmp = (f1 - 4) / 2
+        header(lenhead+itmp+2:lenhead+itmp+5) = elhead(iel(i))
+        lenhead = lenhead + f1 + 1
+      end do
+c
+      lenfout = lenfout + 1
+      fout(lenfout:lenfout) = ')'
 c
 c------------------------------------------------------------------------------
 c

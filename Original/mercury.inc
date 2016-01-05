@@ -42,14 +42,6 @@ c
       parameter (AU = 1.4959787e13)
       parameter (MSUN = 1.9891e33)
 
-c  RAS additions for binary
-
-c Is this a binary? (yes=.TRUE.  no=.FALSE.)
       logical isbinary
+c  RAS IS BINARY
       parameter (isbinary = .TRUE.)
-c Name for the central object ("foo")
-      character*16 cenname
-      parameter (cenname="STAR1")
-c Do we allow collisions or close encounters between the binary stars? (yes=.TRUE.  no=.FALSE.)
-      logical allowclose
-      parameter (allowclose = .FALSE.)

@@ -271,61 +271,18 @@ c Convert time to desired format
           if (timestyle.eq.3) t1 = (time - t0) / 365.25d0
 c
 c Write encounter details to appropriate files
-          if (isbinary) then
-c RAS Changed to hack output of central body name (cenname from mercury.inc)
-            if (timestyle.eq.1) then
-              if (unit(iclo).ge.10) then
-                if (jclo.eq.0) then
-                 write (unit(iclo),fout) year,month,
-     %           t1,cenname,dclo,a1,e1,i1,a2,e2,i2
-                else 
-                 write (unit(iclo),fout) year,month,
-     %           t1,id(jclo),dclo,a1,e1,i1,a2,e2,i2
-                 endif
-              endif
-              if (unit(jclo).ge.10) then
-                if (iclo.eq.0) then
-                 write (unit(jclo),fout) year,month,
-     %           t1,cenname,dclo,a2,e2,i2,a1,e1,i1
-                else 
-                 write (unit(jclo),fout) year,month,
-     %           t1,id(iclo),dclo,a2,e2,i2,a1,e1,i1
-                endif
-              endif
-            else
-              if (unit(iclo).ge.10) then
-                if (jclo.eq.0) then 
-                 write (unit(iclo),fout) t1,cenname,
-     %           dclo,a1,e1,i1,a2,e2,i2
-                else  
-                 write (unit(iclo),fout) t1,id(jclo),
-     %           dclo,a1,e1,i1,a2,e2,i2
-                endif
-              endif
-              if (unit(jclo).ge.10)  then
-                if (iclo.eq.0) then
-                 write (unit(jclo),fout) t1,cenname,
-     %           dclo,a2,e2,i2,a1,e1,i1
-                else
-                 write (unit(jclo),fout) t1,id(iclo),
-     %           dclo,a2,e2,i2,a1,e1,i1
-                endif
-              endif
-            end if
-          else
-            if (timestyle.eq.1) then
-              if (unit(iclo).ge.10) write (unit(iclo),fout) year,month,
-     %           t1,id(jclo),dclo,a1,e1,i1,a2,e2,i2
+          if (timestyle.eq.1) then
+            if (unit(iclo).ge.10) write (unit(iclo),fout) year,month,
+     %        t1,id(jclo),dclo,a1,e1,i1,a2,e2,i2
 c
-              if (unit(jclo).ge.10) write (unit(jclo),fout) year,month,
-     %           t1,id(iclo),dclo,a2,e2,i2,a1,e1,i1
-            else
-              if (unit(iclo).ge.10) write (unit(iclo),fout) t1,id(jclo),
-     %           dclo,a1,e1,i1,a2,e2,i2
-              if (unit(jclo).ge.10) write (unit(jclo),fout) t1,id(iclo),
-     %           dclo,a2,e2,i2,a1,e1,i1
-            end if
-          endif
+            if (unit(jclo).ge.10) write (unit(jclo),fout) year,month,
+     %        t1,id(iclo),dclo,a2,e2,i2,a1,e1,i1
+          else
+            if (unit(iclo).ge.10) write (unit(iclo),fout) t1,id(jclo),
+     %        dclo,a1,e1,i1,a2,e2,i2
+            if (unit(jclo).ge.10) write (unit(jclo),fout) t1,id(iclo),
+     %        dclo,a2,e2,i2,a1,e1,i1
+          end if
 c
 c------------------------------------------------------------------------------
 c

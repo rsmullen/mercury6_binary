@@ -46,7 +46,7 @@ c  RAS additions for binary
 
 c Is this a binary? (yes=.TRUE.  no=.FALSE.)
       logical isbinary
-      parameter (isbinary = .TRUE.)
+      parameter (isbinary = .FALSE.)
 c Name for the central object ("foo")
       character*16 cenname
       parameter (cenname="STAR1")
