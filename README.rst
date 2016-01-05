@@ -10,16 +10,18 @@ mercury
 
 How to compile and run
 ----------------------
-Use your favorite fortran compiler to create an executable.  For instance, on Linux or Mac, try::
+Use your favorite fortran compiler, such as gfortran or f77, to create an executable.  For instance, on Linux or Mac, try::
 
    gfortran -o mercury6 mercury6_ras.for
-   gfortran -o close6 close6_ras.for
+   gfortran -o close6   close6_ras.for
    gfortran -o element6 element6.for
 
+There will li
 
 Disclaimers
 ------------
-*This is designed for a central binary.  However, it *should* work for a 
+
+*This is designed for a central binary.  However, it should work for a 
 binary with s-type planets, although the radius calculations will have to
 be tinkered with (alternatively, try setting your stars as the central 
 object and the first object in the big.in file, regardless of true 
