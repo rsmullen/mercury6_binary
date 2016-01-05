@@ -13,7 +13,7 @@ How to compile and run
 Use your favorite fortran compiler to create an executable.  For instance, on Linux or Mac, try
 
 
-.. code:: fortran
+.. code:: bash
    gfortran -o mercury6 mercury6_ras.for
    gfortran -o close6 close6_ras.for
    gfortran -o element6 element6.for
