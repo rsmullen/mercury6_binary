@@ -21,14 +21,7 @@ There will li
 Disclaimers
 ------------
 
-* This is designed for a central binary.  However, it *should* work for a 
-binary with s-type planets, although the radius calculations will have to
-be tinkered with (alternatively, try setting your stars as the central 
-object and the first object in the big.in file, regardless of true 
-order?). Use at your own risk.
-* The changes have only been tested with the RADAU integrator.  Use other 
-integrators at your own risk.
-* A routine (mco_h2jras) uses a bubble sort algorithm.  This can slow 
-things down if you have a lot of massive bodies.
-* I've fixed all the errors I've found.  If you find a bug, let me know
-so we can try to fix it.
+* This is designed for a central binary.  However, it *should* work for a binary with s-type planets, although the radius calculations will have to be tinkered with (alternatively, try setting your stars as the central object and the first object in the big.in file, regardless of true order?). Use at your own risk.
+* The changes have only been tested with the RADAU integrator.  Use other integrators at your own risk.
+* A routine (mco_h2jras) uses a bubble sort algorithm.  This can slow things down if you have a lot of massive bodies.
+* I've fixed all the errors I've found.  If you find a bug, let me know so we can try to fix it.
