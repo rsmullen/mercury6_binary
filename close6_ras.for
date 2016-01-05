@@ -1,5 +1,18 @@
 c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
+c      CLOSE6_RAS.FOR    
+c
+c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+c
+c Author of changes: Rachel A Smullen (rsmullen@email.arizona.edu)
+c Date of last edit: 5 Jan 2016
+c Source code available on https://github.com/rsmullen/mercury6_binary
+c
+c The only modification is to allow for the central body name to be output
+c Search RAS for location of changes
+
+c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+c
 c      CLOSE6.FOR    (ErikSoft   5 June 2001)
 c
 c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

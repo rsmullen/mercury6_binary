@@ -5,7 +5,7 @@ c
 c%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
 c Author of changes: Rachel A Smullen (rsmullen@email.arizona.edu)
-c Date of last edit: 5 Jan 2015
+c Date of last edit: 5 Jan 2016
 c Source code available on https://github.com/rsmullen/mercury6_binary
 c
 c If you use this code, please cite Smullen, Kratter, and Shannon (2016).
