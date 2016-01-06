@@ -38,7 +38,7 @@ Use your favorite fortran compiler, such as ``gfortran`` or ``f77``, to create a
    gfortran -o close6   close6_ras.for
    gfortran -o element6 element6.for
 
-There will likely be warnings due to the code being written in Fortran77, but it should compile.  Copy or link the executable wherever you want to run your codeusing ``./mercury6``.
+There will likely be warnings due to the code being written in Fortran77, but it should compile.  Copy or link the executable wherever you want to run your code using ``./mercury6``.
 
 Tricks and Caveats
 ------------------
