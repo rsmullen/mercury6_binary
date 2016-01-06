@@ -25,18 +25,26 @@ Notable contents of this repository
      +   ``allowclose``: A flag to allow or forbid close encounters/collisions between the central stars.  Use ``.FALSE.`` to forbid and ``.TRUE.`` to allow.  If you have a very close binary that is stable for the length of the integration, set this to false to speed up the program.
 
 *     ``Kepler47``:  This directory contains example input files to run a circumbinary example, Kepler 47.  The ephemeris was taken from Kratter and Shannon (2014).  To run, compile the code with the ``mercury.inc`` contained in the folder.
-*     ``SolarSystem``: This directory contains example input files to run a single star example, as taken from the original Chambers tar file. To run, compile the code with the ``mercury.inc`` contained in the folder.
+*     ``SolarSystem``: This directory contains example input files to run a single star example (the solar system), as taken from the original Chambers tar file. To run, compile the code with the ``mercury.inc`` contained in the folder.
+*     ``Original``:  This contains the unaltered code, just in case.
 
 
 How to compile and run
 ----------------------
+
 Use your favorite fortran compiler, such as ``gfortran`` or ``f77``, to create an executable.  For instance, on Linux or Mac, try::
 
    gfortran -o mercury6 mercury6_ras.for
    gfortran -o close6   close6_ras.for
    gfortran -o element6 element6.for
 
-There will likely be warnings due to the code being written in Fortran77, but it should compile
+There will likely be warnings due to the code being written in Fortran77, but it should compile.  Copy or link the executable wherever you want to run your code.
+
+Tricks
+------
+
+Unfortuntely, the code needs to be recompiled  any time parameters in the ``mercury.inc`` file get changed.
+
 
 Disclaimers
 ------------
