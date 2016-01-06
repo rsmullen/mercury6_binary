@@ -13,7 +13,9 @@ Notable contents of this repository
 *    ``element6.for``: The code to create output element files.  It requires ``mercury.inc`` and ``swift.inc`` to compile and has not been modified from the original version.
 *    ``mercury.inc``:  This is the file that controls the binary.  At the bottom, I have added three options for the binary.
 
-     +   ``isbinary``: If you want to have a central binary, set this to ``.TRUE.``.  If you want to run Mercury like the original veriosn, set this to ``.FALSE.``
+     +   ``isbinary``: If you want to have a central binary, set this to ``.TRUE.``.  If you want to run Mercury like the original veriosn, set this to ``.FALSE.``.
+     +   ``cenname``: The name you want the central object (the primary) to have.
+     +   ``allowclose``: A flag to allow or forbid close encounters/collisions between the central stars.  Use ``.FALSE.`` to forbid and ``.TRUE.`` to allow.  If you have a very close binary that is stable for the length of the integration, set this to false to speed up the program.
 
 
 How to compile and run
