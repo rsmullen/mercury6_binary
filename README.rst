@@ -11,7 +11,7 @@ Notable contents of this repository
 *   ``mercury6_ras.for``: The main program file that has been modified from the original ``mercury6_2.for``.  It requires ``mercury.inc`` and ``swift.inc`` to compile.
 *   ``close6_ras.for``: The code to create close encounter files.  It requires ``mercury.inc`` and ``swift.inc`` to compile.
 *   ``element6.for``: The code to create output element files.  It requires ``mercury.inc`` and ``swift.inc`` to compile and has not been modified from the original version.
-*   ``mercury.inc``:  This is the file that controls the binary.  At the bottom, I have added three options for the binary
+*   ``mercury.inc``:  This is the file that controls the binary.  At the bottom, I have added three options for the binary.
     * ``isbinary``: If you want to have a central binary, set this to ``.TRUE.``.  If you want to run Mercury like the original veriosn, set this to ``.FALSE.``
 
 
