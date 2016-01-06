@@ -12,6 +12,9 @@ Notable contents of this repository
  
      +   ``mfo_user_centralradius`` allows the user to set the perscription for the central binary radius.
      +   When the user uses a central binary, the central star is considered as a big body instead of as a central object.
+     +   The calculation of the Hill radius uses the object's location instead of its semi-major axis.  Also in this routine, we use a modified Jacobi routine that resorts planets on every call. 
+     +   We apply the De Souza Torres & Anderson (2008) bug fix.
+     +   Other fixes can be found by searching ``RAS`` in the document.
 
 *    ``close6_ras.for``: The code to create close encounter files.  It requires ``mercury.inc`` and ``swift.inc`` to compile.
 *    ``element6.for``: The code to create output element files.  It requires ``mercury.inc`` and ``swift.inc`` to compile and has not been modified from the original version.
