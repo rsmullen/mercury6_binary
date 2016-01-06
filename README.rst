@@ -12,7 +12,7 @@ Notable contents of this repository
 *    ``close6_ras.for``: The code to create close encounter files.  It requires ``mercury.inc`` and ``swift.inc`` to compile.
 *    ``element6.for``: The code to create output element files.  It requires ``mercury.inc`` and ``swift.inc`` to compile and has not been modified from the original version.
 *    ``mercury.inc``:  This is the file that controls the binary.  At the bottom, I have added three options for the binary.
-     * ``isbinary``: If you want to have a central binary, set this to ``.TRUE.``.  If you want to run Mercury like the original veriosn, set this to ``.FALSE.``
+     + ``isbinary``: If you want to have a central binary, set this to ``.TRUE.``.  If you want to run Mercury like the original veriosn, set this to ``.FALSE.``
 
 
 How to compile and run
