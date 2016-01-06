@@ -24,9 +24,9 @@ Notable contents of this repository
      +   ``cenname``: The name you want the central object (the primary) to have.
      +   ``allowclose``: A flag to allow or forbid close encounters/collisions between the central stars.  Use ``.FALSE.`` to forbid and ``.TRUE.`` to allow.  If you have a very close binary that is stable for the length of the integration, set this to false to speed up the program.
 
-*     ``Kepler47``:  This directory contains example input files to run a circumbinary example, Kepler 47.  The ephemeris was taken from Kratter and Shannon (2014).  To run, compile the code with the ``mercury.inc`` contained in the folder.
-*     ``SolarSystem``: This directory contains example input files to run a single star example (the solar system), as taken from the original Chambers tar file. To run, compile the code with the ``mercury.inc`` contained in the folder.
-*     ``Original``:  This contains the unaltered code, just in case.
+*     ``Kepler47/``:  This directory contains example input files to run a circumbinary example, Kepler 47.  The ephemeris was taken from Kratter and Shannon (2014).  To run, compile the code with the ``mercury.inc`` contained in the folder.
+*     ``SolarSystem/``: This directory contains example input files to run a single star example (the solar system), as taken from the original Chambers tar file. To run, compile the code with the ``mercury.inc`` contained in the folder.
+*     ``Original/``:  This contains the unaltered code, just in case.
 
 
 How to compile and run
@@ -40,18 +40,22 @@ Use your favorite fortran compiler, such as ``gfortran`` or ``f77``, to create a
 
 There will likely be warnings due to the code being written in Fortran77, but it should compile.  Copy or link the executable wherever you want to run your codeusing ``./mercury6``.
 
-Tricks
-------
+Tricks and Caveats
+------------------
 
 Unfortuntely, the code needs to be recompiled  any time parameters in the ``mercury.inc`` file get changed.
 
 The binary stars are the central body in the ``param.in`` file and the first body in ``big.in``.
 
+The coordinates must be in central body.  We've found it most relaible to draw our planets in Jacobi coordinates and then convert into central body after.  Similarly, we've found it easiest to not rely on the built-in orbital element converter or the output Jacobi coordinate conversion routine, so we prefer to output in central body coordinates and convert after the fact. 
+
+We don't output the change in mass of the central body.  If that information is important, it can be reconstructed by adding the mass of bodies that collided.
+
 
 Disclaimers
 ------------
 
-* This is designed for a central binary.  However, it *should* work for a binary with s-type planets, although the radius calculations will have to be tinkered with (alternatively, try setting your stars as the central object and the first object in the big.in file, regardless of true order?). Use at your own risk.
+* This is designed for a central binary.  However, it *should* work for a binary with s-type planets, although the radius calculations will have to be tinkered with (alternatively, but untested, try setting your stars as the central object and the first object in the big.in file, regardless of true order?). Use at your own risk.
 * The changes have only been tested with the RADAU integrator.  Use other integrators at your own risk.
 * A routine (``mco_h2jras``) uses a bubble sort algorithm.  This can slow things down if you have a lot of massive bodies.
 * I've fixed all the errors I've found.  If you find a bug, let me know so we can try to fix it.
