@@ -38,12 +38,14 @@ Use your favorite fortran compiler, such as ``gfortran`` or ``f77``, to create a
    gfortran -o close6   close6_ras.for
    gfortran -o element6 element6.for
 
-There will likely be warnings due to the code being written in Fortran77, but it should compile.  Copy or link the executable wherever you want to run your code.
+There will likely be warnings due to the code being written in Fortran77, but it should compile.  Copy or link the executable wherever you want to run your codeusing ``./mercury6``.
 
 Tricks
 ------
 
 Unfortuntely, the code needs to be recompiled  any time parameters in the ``mercury.inc`` file get changed.
+
+The binary stars are the central body in the ``param.in`` file and the first body in ``big.in``.
 
 
 Disclaimers
