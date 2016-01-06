@@ -14,7 +14,7 @@ Notable contents of this repository
      +   When the user uses a central binary, the central star is considered as a big body instead of as a central object.
      +   The calculation of the Hill radius uses the object's location instead of its semi-major axis.  Also in this routine, we use a modified Jacobi routine that resorts planets on every call. 
      +   We apply the De Souza Torres & Anderson (2008) bug fix.
-     +   Other fixes can be found by searching ``RAS`` in the document.
+     +   Other changes can be found by searching ``RAS`` in the document.
 
 *    ``close6_ras.for``: The code to create close encounter files.  It requires ``mercury.inc`` and ``swift.inc`` to compile.
 *    ``element6.for``: The code to create output element files.  It requires ``mercury.inc`` and ``swift.inc`` to compile and has not been modified from the original version.
@@ -23,6 +23,9 @@ Notable contents of this repository
      +   ``isbinary``: If you want to have a central binary, set this to ``.TRUE.``.  If you want to run Mercury like the original veriosn, set this to ``.FALSE.``.
      +   ``cenname``: The name you want the central object (the primary) to have.
      +   ``allowclose``: A flag to allow or forbid close encounters/collisions between the central stars.  Use ``.FALSE.`` to forbid and ``.TRUE.`` to allow.  If you have a very close binary that is stable for the length of the integration, set this to false to speed up the program.
+
+*     ``Kepler47``:  This directory contains example input files to run a circumbinary example, Kepler 47.  The ephemeris was taken from Kratter and Shannon (2014).  To run, compile the code with the ``mercury.inc`` contained in the folder.
+*     ``SolarSystem``: This directory contains example input files to run a single star example, as taken from the original Chambers tar file. To run, compile the code with the ``mercury.inc`` contained in the folder.
 
 
 How to compile and run
