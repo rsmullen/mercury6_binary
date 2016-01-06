@@ -8,7 +8,11 @@ We've created a modified version of the original Mercury code from John Chambers
 Notable contents of this repository
 ---------------------------
 
-*    ``mercury6_ras.for``: The main program file that has been modified from the original ``mercury6_2.for``.  It requires ``mercury.inc`` and ``swift.inc`` to compile.
+*    ``mercury6_ras.for``: The main program file that has been modified from the original ``mercury6_2.for``.  It requires ``mercury.inc`` and ``swift.inc`` to compile.  These are the notable changes made within the code.
+ 
+     +   ``mfo_user_centralradius`` allows the user to set the perscription for the central binary radius.
+     +   When the user uses a central binary, the central star is considered as a big body instead of as a central object.
+
 *    ``close6_ras.for``: The code to create close encounter files.  It requires ``mercury.inc`` and ``swift.inc`` to compile.
 *    ``element6.for``: The code to create output element files.  It requires ``mercury.inc`` and ``swift.inc`` to compile and has not been modified from the original version.
 *    ``mercury.inc``:  This is the file that controls the binary.  At the bottom, I have added three options for the binary.
