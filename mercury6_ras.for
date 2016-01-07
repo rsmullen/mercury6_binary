@@ -314,7 +314,7 @@ c Input/Output
 c
 c Local
 c
-      real*8 RsunToAU,kmToAU,rhocgs
+      real*8 RsunToAU,kmToAU,rhocgs,THIRD
 
 c------------------------------------------------------------------------------
 
@@ -325,7 +325,7 @@ c 1 km in AU
       kmToAU=6.684587122268445599d-9
 c from original Mercury, used to convert cgs density to Mercury units
       rhocgs=AU*AU*AU*K2/MSUN
-
+      THIRD = .3333333333333333d0
 
 c set close encounter radius for central binary in object radii
           starce=3.
