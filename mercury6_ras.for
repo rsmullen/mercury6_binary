@@ -346,9 +346,9 @@ c myind==2 is Charon with density 1.65 g/cm^3
 c don't forget to put in AU
 
 c            if (myind.eq.1) then
-c              rcalc=((3.d0*m(j))/(4.d0*PI*1.88*rhocgs))**THIRD
+c              rcalc=((3.d0*mm)/(4.d0*PI*1.88*rhocgs))**THIRD
 c            else
-c              rcalc=((3.d0*m(j))/(4.d0*PI*1.65*rhocgs))**THIRD
+c              rcalc=((3.d0*mm)/(4.d0*PI*1.65*rhocgs))**THIRD
 c            endif
 
 c
