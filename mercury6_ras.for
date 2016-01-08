@@ -314,7 +314,7 @@ c Input/Output
 c
 c Local
 c
-      real*8 RsunToAU,kmToAU,rhocgs
+      real*8 RsunToAU,kmToAU,rhocgs,THIRD
 
 c------------------------------------------------------------------------------
 
@@ -325,6 +325,7 @@ c 1 km in AU
       kmToAU=6.684587122268445599d-9
 c from original Mercury, used to convert cgs density to Mercury units
       rhocgs=AU*AU*AU*K2/MSUN
+      THIRD = .3333333333333333d0
 
 
 c set close encounter radius for central binary in object radii
@@ -346,9 +347,9 @@ c myind==2 is Charon with density 1.65 g/cm^3
 c don't forget to put in AU
 
 c            if (myind.eq.1) then
-c              rcalc=((3.d0*m(j))/(4.d0*PI*1.88*rhocgs))**THIRD
+c              rcalc=((3.d0*mm)/(4.d0*PI*1.88*rhocgs))**THIRD
 c            else
-c              rcalc=((3.d0*m(j))/(4.d0*PI*1.65*rhocgs))**THIRD
+c              rcalc=((3.d0*mm)/(4.d0*PI*1.65*rhocgs))**THIRD
 c            endif
 
 c
