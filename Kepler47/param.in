@@ -8,16 +8,16 @@
  stop time (days) = 1.E4
  output interval (days) = 100.
  timestep (days) = 10.
- accuracy parameter=1.d-10
+ accuracy parameter=1.d-14
 )---------------------------------------------------------------------
 ) Integration options:
 )---------------------------------------------------------------------
  stop integration after a close encounter = no
- allow collisions to occur = no
+ allow collisions to occur = yes
  include collisional fragmentation = no
  express time in days or years = years
  express time relative to integration start time = yes
- output precision = medium
+ output precision = high
  < not used at present >
  include relativity in integration= no
  include user-defined force = no
@@ -33,5 +33,5 @@
  < not used at present >
  < not used at present >
  Hybrid integrator changeover (Hill radii) = 3.
- number of timesteps between data dumps = 1
+ number of timesteps between data dumps = 100
  number of timesteps between periodic effects = 1
