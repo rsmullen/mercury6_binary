@@ -20,7 +20,7 @@ Notable contents of this repository
 *    ``element6.for:`` The code to create output element files.  It requires ``mercury.inc`` and ``swift.inc`` to compile and has not been modified from the original version.
 *    ``mercury.inc:``  This is the file that controls the binary.  At the bottom, I have added three options for the binary.
 
-     +   ``isbinary:`` If you want to have a central binary, set this to ``.TRUE.;`` If you want to run Mercury like the original veriosn, set this to ``.FALSE.``.
+     +   ``isbinary:`` If you want to have a central binary, set this to ``.TRUE.;`` If you want to run Mercury like the original version, set this to ``.FALSE.``.
      +   ``cenname:`` The name you want the central object (the primary) to have.
      +   ``allowclose:`` A flag to allow or forbid close encounters/collisions between the central stars.  Use ``.FALSE.`` to forbid and ``.TRUE.`` to allow.  If you have a very close binary that is stable for the length of the integration, set this to false to speed up the program.
 
@@ -32,22 +32,22 @@ Notable contents of this repository
 How to compile and run
 ----------------------
 
-Use your favorite fortran compiler, such as ``gfortran`` or ``f77``, to create an executable.  For instance, on Linux or Mac, try::
+Use your favorite FORTRAN compiler, such as ``gfortran`` or ``f77``, to create an executable.  For instance, on Linux or Mac, try::
 
    gfortran -o mercury6 mercury6_ras.for
    gfortran -o close6   close6_ras.for
    gfortran -o element6 element6.for
 
-There will likely be warnings due to the code being written in Fortran77, but it should compile.  Copy or link the executable wherever you want (wherever your input files are) to run your code using ``./mercury6``.
+There will likely be warnings due to the code being written in FORTRAN77, but it should compile.  Copy or link the executable wherever you want (wherever your input files are) to run your code using ``./mercury6``.
 
 Tricks and Caveats
 ------------------
 
-Unfortuntely, the code needs to be recompiled any time parameters in the ``mercury.inc`` file get changed.
+Unfortunately, the code needs to be recompiled any time parameters in the ``mercury.inc`` file get changed.
 
 The binary stars are the central body in the ``param.in`` file and the first body in ``big.in``.
 
-The coordinates must be in central body.  We've found it most relaible to draw our planets in Jacobi coordinates and then convert into central body after.  Similarly, we've found it easiest to not rely on the built-in orbital element converter or the output Jacobi coordinate conversion routine, so we prefer to output in central body coordinates and convert after the fact. 
+The coordinates must be in central body.  We've found it most reliable to draw our planets in Jacobi coordinates and then convert into central body after.  Similarly, we've found it easiest to not rely on the built-in orbital element converter or the output Jacobi coordinate conversion routine, so we prefer to output in central body coordinates and convert after the fact. 
 
 We don't output the change in mass of the central body.  If that information is important, it can be reconstructed by adding the mass of bodies that collided.
 
