@@ -326,10 +326,6 @@ c 1 km in AU
 c from original Mercury, used to convert cgs density to Mercury units
       rhocgs=AU*AU*AU*K2/MSUN
       THIRD = .3333333333333333d0
-<<<<<<< HEAD
-
-=======
->>>>>>> 77f719f4956440b3fddd52555acc6bafa95dec4e
 
 c set close encounter radius for central binary in object radii
           starce=3.
