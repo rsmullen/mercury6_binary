@@ -5,6 +5,8 @@ A version to handle binary stars
 
 We've created a modified version of the original Mercury code from John Chambers (http://www.arm.ac.uk/~jec/home.html) that can work for either single stars or binary stars.  This uses the exact same input formats as the original. A full explanation of all inputs and outputs is given in ``mercury.man.`` 
 
+If you want a nice python wrapper for initializing Mercury simulations, see Adam Sutherland's code quicksilver at https://github.com/adamsutherland/quicksilver.
+
 Notable contents of this repository
 ---------------------------
 
